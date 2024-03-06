@@ -10,10 +10,13 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class SellerDAOJDBC implements SellerDAO {
-    private Connection connection;
+    private final Connection connection;
 
     public SellerDAOJDBC(Connection connection){
         this.connection = connection;
@@ -60,7 +63,6 @@ public class SellerDAOJDBC implements SellerDAO {
         finally {
             DB.closeStatement(preparedStatement);
             DB.closeResultSet(resultSet);
-            DB.closeConnection();
         }
 
     }
@@ -86,5 +88,44 @@ public class SellerDAOJDBC implements SellerDAO {
     @Override
     public List<Seller> findAll() {
         return null;
+    }
+
+    @Override
+    public List<Seller> findByDepartment(Department department) {
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+
+        try{
+            preparedStatement = connection.prepareStatement(
+                    "SELECT seller.*,department.Name as DepName " +
+                            "FROM seller INNER JOIN department " +
+                            "ON seller.DepartmentId = department.Id " +
+                            "WHERE DepartmentId = ? " +
+                            "ORDER BY Name");
+
+            preparedStatement.setInt(1, department.getId());
+
+            resultSet = preparedStatement.executeQuery();
+
+            Map<Integer, Department> map = new HashMap<>();
+            List<Seller> list = new ArrayList<>();
+
+            while (resultSet.next()){
+                Department dep = map.get(resultSet.getInt("DepartmentId"));
+                if(dep == null) {
+                    dep = instantiateDepartment(resultSet);
+                    map.put(resultSet.getInt("DepartmentId"), dep);
+                }
+                list.add(instantiateSeller(resultSet, dep));
+            }
+            return list;
+
+        }catch (SQLException e){
+            throw new DBException("Fatal error: " + e.getMessage());
+        }
+        finally {
+            DB.closeStatement(preparedStatement);
+            DB.closeResultSet(resultSet);
+        }
     }
 }
