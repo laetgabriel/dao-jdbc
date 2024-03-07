@@ -55,13 +55,51 @@ public class SellerDAOJDBC implements SellerDAO {
     }
 
     @Override
-    public void update(Seller department) {
+    public void update(Seller seller) {
+        PreparedStatement preparedStatement = null;
+        try{
+            preparedStatement = connection.prepareStatement(
+                    "UPDATE seller " +
+                            "SET Name = ?, Email = ?, BirthDate = ?, BaseSalary = ?, DepartmentId = ? " +
+                            "WHERE Id = ? ");
+            preparedStatement.setString(1, seller.getName());
+            preparedStatement.setString(2, seller.getEmail());
+            preparedStatement.setDate(3, new Date(seller.getBirthDate().getTime()));
+            preparedStatement.setDouble(4, seller.getBaseSalary());
+            preparedStatement.setInt(5, seller.getDepartment().getId());
+            preparedStatement.setInt(6, seller.getId());
+
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new DBException("Fatal error: " + e.getMessage());
+        }finally {
+            DB.closeStatement(preparedStatement);
+        }
 
     }
 
     @Override
     public void deleteById(Integer id) {
+        PreparedStatement preparedStatement = null;
 
+        try{
+            preparedStatement = connection.prepareStatement(
+                    "DELETE FROM seller " +
+                            "WHERE Id = ?");
+
+            preparedStatement.setInt(1, id);
+
+           int row = preparedStatement.executeUpdate();
+
+           if (row == 0){
+               throw new DBException("Unexpected seller");
+           }
+
+        }catch(SQLException e){
+            System.out.println("Fatal error: " + e.getMessage());
+        }finally {
+            DB.closeStatement(preparedStatement);
+        }
     }
 
     @Override
