@@ -84,7 +84,7 @@ public class SellerDAOJDBC implements SellerDAO {
 
         try{
             preparedStatement = connection.prepareStatement(
-                    "DELETE FROM seller " +
+                     "DELETE FROM seller " +
                             "WHERE Id = ?");
 
             preparedStatement.setInt(1, id);
